@@ -2,42 +2,70 @@ package service
 
 import (
 	"fmt"
-	"log"
 	"time"
 
-	"github.com/Zhiyenbek/users-main-service/config"
-	"github.com/Zhiyenbek/users-main-service/internal/models"
-	"github.com/Zhiyenbek/users-main-service/internal/repository"
+	"github.com/Zhiyenbek/users-auth-service/config"
+	"github.com/Zhiyenbek/users-auth-service/internal/models"
+	"github.com/Zhiyenbek/users-auth-service/internal/repository"
 	"github.com/dgrijalva/jwt-go"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type authService struct {
-	cfg       *config.Configs
-	logger    *zap.SugaredLogger
-	authRepo  repository.AuthRepository
-	tokenRepo repository.TokenRepository
+	cfg           *config.Configs
+	logger        *zap.SugaredLogger
+	authRepo      repository.AuthRepository
+	tokenRepo     repository.TokenRepository
+	recruiterRepo repository.RecruiterRepository
+	candidateRepo repository.CandidateRepository
 }
 
 func NewAuthService(repo *repository.Repository, cfg *config.Configs, logger *zap.SugaredLogger) AuthService {
 	return &authService{
-		authRepo:  repo.AuthRepository,
-		tokenRepo: repo.TokenRepository,
-		cfg:       cfg,
-		logger:    logger,
+		authRepo:      repo.AuthRepository,
+		tokenRepo:     repo.TokenRepository,
+		recruiterRepo: repo.RecruiterRepository,
+		candidateRepo: repo.CandidateRepository,
+		cfg:           cfg,
+		logger:        logger,
 	}
 }
 
+func (s *authService) CreateCandidate(req *models.CandidateSignUpRequest) error {
+	var err error
+	req.Password, err = hashAndSalt([]byte(req.Password))
+	if err != nil {
+		s.logger.Error("could not hash password")
+		return err
+	}
+	err = s.candidateRepo.CreateCandidate(req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *authService) CreateRecruiter(req *models.RecruiterSignUpRequest) error {
+	var err error
+	req.Password, err = hashAndSalt([]byte(req.Password))
+	if err != nil {
+		s.logger.Error("could not hash password")
+		return err
+	}
+	err = s.recruiterRepo.CreateRecruiter(req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 func (s *authService) Login(creds *models.UserSignInRequest) (*models.Tokens, error) {
 	pass, userID, err := s.authRepo.GetUserInfoByLogin(creds.Login)
 	if err != nil {
-		s.logger.Error(err)
 		return nil, err
 	}
-	log.Print(creds.Password)
 	if !checkPasswordHash(creds.Password, pass) {
-		log.Println("password not matched!")
+		s.logger.Error("failed to login. Password didn't match")
 		return nil, models.ErrWrongPassword
 	}
 
@@ -126,6 +154,7 @@ func (s *authService) parseToken(tokenString string, tokenSecret string) (*model
 	}
 	return nil, fmt.Errorf("could not parse token: %w", models.ErrInvalidToken)
 }
+
 func (s *authService) RefreshToken(tokenString string) (*models.Tokens, error) {
 	token, err := s.parseToken(tokenString, s.cfg.Token.Refresh.TokenSecret)
 	if err != nil {

@@ -5,18 +5,20 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Zhiyenbek/users-main-service/config"
-	"github.com/Zhiyenbek/users-main-service/internal/models"
+	"github.com/Zhiyenbek/users-auth-service/config"
+	"github.com/Zhiyenbek/users-auth-service/internal/models"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"go.uber.org/zap"
 )
 
 type authRepository struct {
-	db  *pgxpool.Pool
-	cfg *config.DBConf
+	db     *pgxpool.Pool
+	cfg    *config.DBConf
+	logger *zap.SugaredLogger
 }
 
-func NewAuthRepository(db *pgxpool.Pool, cfg *config.DBConf) AuthRepository {
+func NewAuthRepository(db *pgxpool.Pool, cfg *config.DBConf, logger *zap.SugaredLogger) AuthRepository {
 	return &authRepository{
 		db:  db,
 		cfg: cfg,

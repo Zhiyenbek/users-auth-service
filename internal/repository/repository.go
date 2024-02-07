@@ -1,19 +1,29 @@
 package repository
 
 import (
-	"github.com/Zhiyenbek/users-main-service/config"
-	"github.com/Zhiyenbek/users-main-service/internal/models"
+	"github.com/Zhiyenbek/users-auth-service/config"
+	"github.com/Zhiyenbek/users-auth-service/internal/models"
 	"github.com/go-redis/redis/v7"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"go.uber.org/zap"
 )
 
 type Repository struct {
 	AuthRepository
 	TokenRepository
+	RecruiterRepository
+	CandidateRepository
 }
 
 type AuthRepository interface {
 	GetUserInfoByLogin(login string) (string, int64, error)
+}
+
+type RecruiterRepository interface {
+	CreateRecruiter(input *models.RecruiterSignUpRequest) error
+}
+type CandidateRepository interface {
+	CreateCandidate(input *models.CandidateSignUpRequest) error
 }
 
 type TokenRepository interface {
@@ -22,9 +32,11 @@ type TokenRepository interface {
 	GetToken(userID int64) (string, error)
 }
 
-func New(db *pgxpool.Pool, cfg *config.Configs, redis *redis.Client) *Repository {
+func New(db *pgxpool.Pool, cfg *config.Configs, redis *redis.Client, log *zap.SugaredLogger) *Repository {
 	return &Repository{
-		AuthRepository:  NewAuthRepository(db, cfg.DB),
-		TokenRepository: NewTokenRepository(redis),
+		AuthRepository:      NewAuthRepository(db, cfg.DB, log),
+		TokenRepository:     NewTokenRepository(redis),
+		RecruiterRepository: NewRecruiterRepository(db, cfg.DB, log),
+		CandidateRepository: NewCandidateRepository(db, cfg.DB, log),
 	}
 }

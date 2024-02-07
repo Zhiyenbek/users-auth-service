@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"github.com/Zhiyenbek/users-main-service/config"
-	"github.com/Zhiyenbek/users-main-service/internal/service"
+	"github.com/Zhiyenbek/users-auth-service/config"
+	"github.com/Zhiyenbek/users-auth-service/internal/service"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -30,6 +30,8 @@ func (h *handler) InitRoutes() *gin.Engine {
 	router := gin.Default()
 	router.Use(cors.Default())
 	router.POST("/sign-in", h.SignIn)
+	router.POST("/recruiter/sign-up", h.RecruiterSignUp)
+	router.POST("/candidate/sign-up", h.CandidateSignUp)
 	router.POST("/refresh-token", h.RefreshToken)
 
 	router.POST("/verify", h.VerifyToken, h.TestAuth)

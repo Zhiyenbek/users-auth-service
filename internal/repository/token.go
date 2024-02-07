@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/Zhiyenbek/users-main-service/internal/models"
+	"github.com/Zhiyenbek/users-auth-service/internal/models"
 	"github.com/go-redis/redis/v7"
 )
 

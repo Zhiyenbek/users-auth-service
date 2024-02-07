@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/Zhiyenbek/users-main-service/internal/app"
+	"github.com/Zhiyenbek/users-auth-service/internal/app"
 )
 
 func main() {

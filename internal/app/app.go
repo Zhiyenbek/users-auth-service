@@ -9,11 +9,11 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/Zhiyenbek/users-main-service/config"
-	handler "github.com/Zhiyenbek/users-main-service/internal/handler/http"
-	"github.com/Zhiyenbek/users-main-service/internal/repository"
-	"github.com/Zhiyenbek/users-main-service/internal/repository/connection"
-	"github.com/Zhiyenbek/users-main-service/internal/service"
+	"github.com/Zhiyenbek/users-auth-service/config"
+	handler "github.com/Zhiyenbek/users-auth-service/internal/handler/http"
+	"github.com/Zhiyenbek/users-auth-service/internal/repository"
+	"github.com/Zhiyenbek/users-auth-service/internal/repository/connection"
+	"github.com/Zhiyenbek/users-auth-service/internal/service"
 	"go.uber.org/zap"
 )
 
@@ -40,7 +40,7 @@ func Run() error {
 		return err
 	}
 	defer redis.Close()
-	repos := repository.New(db, cfg, redis)
+	repos := repository.New(db, cfg, redis, sugar)
 	services := service.New(repos, sugar, cfg)
 	handlers := handler.New(services, sugar, cfg)
 

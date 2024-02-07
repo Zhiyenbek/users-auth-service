@@ -4,7 +4,7 @@ import (
 	"errors"
 	"unicode"
 
-	"github.com/Zhiyenbek/users-main-service/internal/models"
+	"github.com/Zhiyenbek/users-auth-service/internal/models"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 )

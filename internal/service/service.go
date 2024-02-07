@@ -1,15 +1,17 @@
 package service
 
 import (
-	"github.com/Zhiyenbek/users-main-service/config"
-	"github.com/Zhiyenbek/users-main-service/internal/models"
-	"github.com/Zhiyenbek/users-main-service/internal/repository"
+	"github.com/Zhiyenbek/users-auth-service/config"
+	"github.com/Zhiyenbek/users-auth-service/internal/models"
+	"github.com/Zhiyenbek/users-auth-service/internal/repository"
 	"go.uber.org/zap"
 )
 
 type AuthService interface {
 	Login(creds *models.UserSignInRequest) (*models.Tokens, error)
 	RefreshToken(tokenString string) (*models.Tokens, error)
+	CreateRecruiter(req *models.RecruiterSignUpRequest) error
+	CreateCandidate(req *models.CandidateSignUpRequest) error
 }
 
 type Service struct {

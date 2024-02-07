@@ -5,7 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/Zhiyenbek/users-main-service/config"
+	"github.com/Zhiyenbek/users-auth-service/config"
 	"github.com/go-redis/redis/v7"
 )
 
