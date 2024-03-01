@@ -28,6 +28,9 @@ func (h *handler) CandidateSignUp(c *gin.Context) {
 		var errMsg error
 		var code int
 		switch {
+		case errors.Is(err, models.ErrUsernameExists):
+			errMsg = models.ErrUsernameExists
+			code = http.StatusBadRequest
 		default:
 			errMsg = models.ErrInternalServer
 			code = http.StatusInternalServerError

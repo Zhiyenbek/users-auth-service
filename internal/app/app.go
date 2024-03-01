@@ -39,7 +39,12 @@ func Run() error {
 		sugar.Errorf("error while creating redis clinet: %v", err)
 		return err
 	}
-	defer redis.Close()
+	defer func() {
+		err = redis.Close()
+		if err != nil {
+			sugar.Errorf("failed to close redis %v", err)
+		}
+	}()
 	repos := repository.New(db, cfg, redis, sugar)
 	services := service.New(repos, sugar, cfg)
 	handlers := handler.New(services, sugar, cfg)

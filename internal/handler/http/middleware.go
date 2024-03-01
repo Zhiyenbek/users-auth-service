@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func parseAuthToken(tokenString string, tokenSecret string) (*models.Token, error) {
+func ParseAuthToken(tokenString string, tokenSecret string) (*models.Token, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &models.JwtUserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(tokenSecret), nil
 	})
@@ -20,7 +20,7 @@ func parseAuthToken(tokenString string, tokenSecret string) (*models.Token, erro
 		token := &models.Token{
 			PublicID:   claims.PublicID,
 			TokenValue: tokenString,
-			TTL:        time.Duration(claims.TTL),
+			TTL:        time.Duration(claims.ExpiresAt),
 		}
 		return token, nil
 	}
@@ -34,7 +34,7 @@ func (h *handler) VerifyToken(c *gin.Context) {
 		c.AbortWithStatusJSON(401, sendResponse(-1, nil, models.ErrInvalidToken))
 		return
 	}
-	_, err = parseAuthToken(jwtToken, h.cfg.Token.Access.TokenSecret)
+	_, err = ParseAuthToken(jwtToken, h.cfg.Token.Access.TokenSecret)
 	if err != nil {
 		h.logger.Error(err)
 		c.AbortWithStatusJSON(401, sendResponse(-1, nil, models.ErrInvalidToken))

@@ -45,3 +45,19 @@ func (r *authRepository) GetUserInfoByLogin(login string) (string, string, error
 	return password, ID.String(), nil
 
 }
+
+func (r *authRepository) Exists(login string) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.cfg.TimeOut)
+	defer cancel()
+
+	var exists bool
+	query := `SELECT EXISTS(SELECT 1 FROM recruiters WHERE public_id = $1)`
+
+	err := r.db.QueryRow(ctx, query, login).Scan(&exists)
+	if err != nil {
+		r.logger.Errorf("Error occurred while checking user existence: %v", err)
+		return false, err
+	}
+
+	return exists, nil
+}

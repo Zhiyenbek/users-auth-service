@@ -17,6 +17,7 @@ type Repository struct {
 
 type AuthRepository interface {
 	GetUserInfoByLogin(login string) (string, string, error)
+	Exists(loging string) (bool, error)
 }
 
 type RecruiterRepository interface {

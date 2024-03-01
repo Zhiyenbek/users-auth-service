@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS positions (
  
 CREATE TABLE IF NOT EXISTS skills ( 
     id SERIAL PRIMARY KEY, 
-    public_id UUID UNIQUE, 
+    public_id UUID UNIQUE DEFAULT uuid_generate_v4() NOT NULL,
     name TEXT 
 ); 
  

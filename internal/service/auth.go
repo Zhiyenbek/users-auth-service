@@ -43,6 +43,13 @@ func (s *authService) CreateCandidate(req *models.CandidateSignUpRequest) error 
 	if err != nil {
 		return err
 	}
+	exists, err := s.authRepo.Exists(req.Login)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return models.ErrUsernameExists
+	}
 	return nil
 }
 
@@ -56,6 +63,13 @@ func (s *authService) CreateRecruiter(req *models.RecruiterSignUpRequest) error 
 	err = s.recruiterRepo.CreateRecruiter(req)
 	if err != nil {
 		return err
+	}
+	exists, err := s.authRepo.Exists(req.Login)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return models.ErrUsernameExists
 	}
 	return nil
 }
