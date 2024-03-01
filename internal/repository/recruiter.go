@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Zhiyenbek/users-auth-service/config"
 	"github.com/Zhiyenbek/users-auth-service/internal/models"
@@ -52,40 +53,35 @@ func (r *recruiterRepository) CreateRecruiter(recruiter *models.RecruiterSignUpR
 		}
 		return err
 	}
+	query = `SELECT public_id FROM companies WHERE name = $1;`
+	err = tx.QueryRow(ctx, query, recruiter.CompanyPublicID).Scan(&recruiter.CompanyPublicID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			query := `INSERT INTO companies (name)
+			VALUES
+				($1)
+			RETURNING public_id;`
 
-	if recruiter.CompanyPublicID == uuid.Nil {
-		query := `INSERT INTO companies (name)
-				VALUES
-					($1)
-				RETURNING public_id;`
+			err = tx.QueryRow(ctx, query, recruiter.CompanyName).Scan(&recruiter.CompanyPublicID)
+			if err != nil {
+				r.logger.Errorf("Error occurred while creating recruiters in companies: %v", err)
 
-		err = tx.QueryRow(ctx, query, recruiter.CompanyName).Scan(&recruiter.CompanyPublicID)
-		if err != nil {
-			r.logger.Errorf("Error occurred while creating recruiters in companies: %v", err)
-
-			errTX := tx.Rollback(ctx)
-			if errTX != nil {
-				r.logger.Errorf("ERROR: transaction: %s", errTX)
+				errTX := tx.Rollback(ctx)
+				if errTX != nil {
+					r.logger.Errorf("ERROR: transaction: %s", errTX)
+				}
+				return err
 			}
-			return err
-		}
-	} else {
-		var exists bool
-		query := `SELECT EXISTS(SELECT 1 FROM companies WHERE public_id = $1);`
-		err = tx.QueryRow(ctx, query, recruiter.CompanyPublicID).Scan(&exists)
-		if err != nil {
+		} else {
 			r.logger.Errorf("Error occurred while checking company existence: %v", err)
-
 			errTX := tx.Rollback(ctx)
 			if errTX != nil {
 				r.logger.Errorf("ERROR: transaction: %s", errTX)
 			}
 			return err
-		}
-		if !exists {
-			return models.ErrCompanyDoesntExists
 		}
 	}
+
 	query = `INSERT INTO auth (user_id, login, password) VALUES ($1, $2, $3);`
 
 	_, err = tx.Exec(ctx, query, user_id, recruiter.Login, recruiter.Password)
@@ -97,6 +93,7 @@ func (r *recruiterRepository) CreateRecruiter(recruiter *models.RecruiterSignUpR
 	query = `INSERT INTO recruiters
 				(public_id, company_public_id)
 			 VALUES ($1, $2)`
+
 	_, err = tx.Exec(ctx, query, user_public_id, recruiter.CompanyPublicID)
 
 	if err != nil {
@@ -107,7 +104,6 @@ func (r *recruiterRepository) CreateRecruiter(recruiter *models.RecruiterSignUpR
 		}
 		return err
 	}
-
 	err = tx.Commit(ctx)
 	if err != nil {
 		r.logger.Errorf("Error occurred while committing transaction: %v", err)
@@ -120,4 +116,20 @@ func (r *recruiterRepository) CreateRecruiter(recruiter *models.RecruiterSignUpR
 	}
 
 	return nil
+}
+
+func (r *recruiterRepository) Exists(publicID string) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.cfg.TimeOut)
+	defer cancel()
+
+	var exists bool
+	query := `SELECT EXISTS(SELECT 1 FROM recruiters WHERE public_id = $1)`
+
+	err := r.db.QueryRow(ctx, query, publicID).Scan(&exists)
+	if err != nil {
+		r.logger.Errorf("Error occurred while checking user existence: %v", err)
+		return false, err
+	}
+
+	return exists, nil
 }

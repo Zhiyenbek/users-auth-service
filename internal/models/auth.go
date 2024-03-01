@@ -34,9 +34,10 @@ type CandidateSignUpRequest struct {
 }
 
 type Token struct {
-	UserID     int64
+	PublicID   string
 	TokenValue string
-	ExpiresAt  time.Duration
+	Role       string
+	TTL        time.Duration
 }
 
 // Tokens - structure for holding access and refresh token
@@ -45,6 +46,7 @@ type Tokens struct {
 	RefreshToken *Token
 }
 type JwtUserClaims struct {
-	UserID int64 `json:"user_id"`
+	PublicID string `json:"user_public_id"`
+	Role     string `json:"role"`
 	jwt.StandardClaims
 }

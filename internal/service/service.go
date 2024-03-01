@@ -8,7 +8,8 @@ import (
 )
 
 type AuthService interface {
-	Login(creds *models.UserSignInRequest) (*models.Tokens, error)
+	CandidateLogin(creds *models.UserSignInRequest) (*models.Tokens, error)
+	RecruiterLogin(creds *models.UserSignInRequest) (*models.Tokens, error)
 	RefreshToken(tokenString string) (*models.Tokens, error)
 	CreateRecruiter(req *models.RecruiterSignUpRequest) error
 	CreateCandidate(req *models.CandidateSignUpRequest) error

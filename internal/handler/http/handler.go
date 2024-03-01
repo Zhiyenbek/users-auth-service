@@ -29,7 +29,8 @@ func New(services *service.Service, logger *zap.SugaredLogger, cfg *config.Confi
 func (h *handler) InitRoutes() *gin.Engine {
 	router := gin.Default()
 	router.Use(cors.Default())
-	router.POST("/sign-in", h.SignIn)
+	router.POST("/recruiter/sign-in", h.RecruiterSignIn)
+	router.POST("/candidate/sign-in", h.CandidateSignIn)
 	router.POST("/recruiter/sign-up", h.RecruiterSignUp)
 	router.POST("/candidate/sign-up", h.CandidateSignUp)
 	router.POST("/refresh-token", h.RefreshToken)

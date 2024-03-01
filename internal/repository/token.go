@@ -3,7 +3,6 @@ package repository
 import (
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/Zhiyenbek/users-auth-service/internal/models"
 	"github.com/go-redis/redis/v7"
@@ -19,23 +18,23 @@ func NewTokenRepository(client *redis.Client) TokenRepository {
 	}
 }
 func (r *tokenRepository) SetRTToken(token *models.Token) error {
-	key := strconv.Itoa(int(token.UserID))
-	if err := r.client.Set(key, token.TokenValue, token.ExpiresAt).Err(); err != nil {
+	key := token.PublicID
+	if err := r.client.Set(key, token.TokenValue, token.TTL).Err(); err != nil {
 		return fmt.Errorf("%w could not set refresh token to redis for TokenValue : %s: %v", models.ErrInternalServer, token.TokenValue, err)
 	}
 	return nil
 }
 
-func (r *tokenRepository) UnsetRTToken(userID int64) error {
-	key := strconv.Itoa(int(userID))
+func (r *tokenRepository) UnsetRTToken(publicID string) error {
+	key := publicID
 	if err := r.client.Del(key).Err(); err != nil {
 		return fmt.Errorf("%w could not delete refresh token to redis for TokenValue : %v", models.ErrInternalServer, err)
 	}
 	return nil
 }
 
-func (r *tokenRepository) GetToken(userID int64) (string, error) {
-	key := strconv.Itoa(int(userID))
+func (r *tokenRepository) GetToken(publicID string) (string, error) {
+	key := publicID
 	value := r.client.Get(key)
 	TokenValue, err := value.Result()
 	if err != nil || TokenValue == "" {

@@ -126,3 +126,19 @@ func (r *candidateRepository) CreateCandidate(candidate *models.CandidateSignUpR
 
 	return nil
 }
+
+func (r *candidateRepository) Exists(publicID string) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.cfg.TimeOut)
+	defer cancel()
+
+	var exists bool
+	query := `SELECT EXISTS(SELECT 1 FROM candidates WHERE public_id = $1)`
+
+	err := r.db.QueryRow(ctx, query, publicID).Scan(&exists)
+	if err != nil {
+		r.logger.Errorf("Error occurred while checking user existence: %v", err)
+		return false, err
+	}
+
+	return exists, nil
+}

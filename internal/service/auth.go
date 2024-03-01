@@ -59,17 +59,43 @@ func (s *authService) CreateRecruiter(req *models.RecruiterSignUpRequest) error 
 	}
 	return nil
 }
-func (s *authService) Login(creds *models.UserSignInRequest) (*models.Tokens, error) {
+
+func (s *authService) CandidateLogin(creds *models.UserSignInRequest) (*models.Tokens, error) {
 	pass, userID, err := s.authRepo.GetUserInfoByLogin(creds.Login)
 	if err != nil {
 		return nil, err
 	}
 	if !checkPasswordHash(creds.Password, pass) {
 		s.logger.Error("failed to login. Password didn't match")
-		return nil, models.ErrWrongPassword
+		return nil, models.ErrWrongCredential
 	}
+	exists, err := s.candidateRepo.Exists(userID)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, models.ErrWrongCredential
+	}
+	return s.generateTokens(userID, "candidate")
+}
 
-	return s.generateTokens(userID)
+func (s *authService) RecruiterLogin(creds *models.UserSignInRequest) (*models.Tokens, error) {
+	pass, userID, err := s.authRepo.GetUserInfoByLogin(creds.Login)
+	if err != nil {
+		return nil, err
+	}
+	if !checkPasswordHash(creds.Password, pass) {
+		s.logger.Error("failed to login. Password didn't match")
+		return nil, models.ErrWrongCredential
+	}
+	exists, err := s.recruiterRepo.Exists(userID)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, models.ErrWrongCredential
+	}
+	return s.generateTokens(userID, "recruiter")
 }
 
 // hashAndSalt - hashes the password with salt. Function takes password as []byte and returns the hash as string and error.
@@ -88,17 +114,16 @@ func checkPasswordHash(password, hash string) bool {
 }
 
 // CreateAccessToken - function for creating new access token for user
-func createAccessToken(userID int64, tokenTTL time.Duration, tokenSecret string) (*models.Token, error) {
+func createAccessToken(publicID string, tokenTTL time.Duration, tokenSecret string, role string) (*models.Token, error) {
 	var err error
 	//Creating Access Token
 	iat := time.Now().Unix()
 	exp := time.Now().Add(tokenTTL)
 	atClaims := jwt.MapClaims{}
-	atClaims["authorized"] = true
-	atClaims["user_id"] = userID
+	atClaims["user_public_id"] = publicID
 	atClaims["iat"] = iat
 	atClaims["exp"] = exp.Unix()
-
+	atClaims["role"] = role
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
 	tokenString, err := at.SignedString([]byte(tokenSecret))
 	if err != nil {
@@ -106,23 +131,24 @@ func createAccessToken(userID int64, tokenTTL time.Duration, tokenSecret string)
 	}
 	token := &models.Token{
 		TokenValue: tokenString,
-		UserID:     userID,
-		ExpiresAt:  time.Until(exp),
+		PublicID:   publicID,
+		TTL:        time.Until(exp),
 	}
 	return token, nil
 }
 
 // CreateRefreshToken - function for creating new refresh token for user
-func createRefreshToken(userID int64, tokenTTL time.Duration, tokenSecret string) (*models.Token, error) {
+func createRefreshToken(publicID string, tokenTTL time.Duration, tokenSecret string, role string) (*models.Token, error) {
 	var err error
 	//Creating Refresh Token
 	rtClaims := jwt.MapClaims{}
 	iat := time.Now().Unix()
 	exp := time.Now().Add(tokenTTL)
 	rtClaims["authorized"] = true
-	rtClaims["user_id"] = userID
+	rtClaims["user_public_id"] = publicID
 	rtClaims["iat"] = iat
 	rtClaims["exp"] = exp.Unix()
+	rtClaims["role"] = role
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, rtClaims)
 	tokenString, err := at.SignedString([]byte(tokenSecret))
 	if err != nil {
@@ -130,8 +156,8 @@ func createRefreshToken(userID int64, tokenTTL time.Duration, tokenSecret string
 	}
 	token := &models.Token{
 		TokenValue: tokenString,
-		UserID:     userID,
-		ExpiresAt:  time.Until(exp),
+		PublicID:   publicID,
+		TTL:        time.Until(exp),
 	}
 	return token, nil
 }
@@ -147,8 +173,9 @@ func (s *authService) parseToken(tokenString string, tokenSecret string) (*model
 	}
 	if claims, ok := token.Claims.(*models.JwtUserClaims); ok && token.Valid {
 		token := &models.Token{
-			UserID:     claims.UserID,
+			PublicID:   claims.PublicID,
 			TokenValue: tokenString,
+			Role:       claims.Role,
 		}
 		return token, nil
 	}
@@ -161,7 +188,7 @@ func (s *authService) RefreshToken(tokenString string) (*models.Tokens, error) {
 		s.logger.Error(err)
 		return nil, err
 	}
-	redisTokenString, err := s.tokenRepo.GetToken(token.UserID)
+	redisTokenString, err := s.tokenRepo.GetToken(token.PublicID)
 	if err != nil {
 		s.logger.Error(err)
 		return nil, err
@@ -170,12 +197,12 @@ func (s *authService) RefreshToken(tokenString string) (*models.Tokens, error) {
 		s.logger.Errorf("token is unmatched. Wanted %s. Got: %s", tokenString, redisTokenString)
 		return nil, models.ErrTokenExpired
 	}
-	err = s.tokenRepo.UnsetRTToken(token.UserID)
+	err = s.tokenRepo.UnsetRTToken(token.PublicID)
 	if err != nil {
 		s.logger.Error(err)
 		return nil, err
 	}
-	tokens, err := s.generateTokens(token.UserID)
+	tokens, err := s.generateTokens(token.PublicID, token.Role)
 
 	if err != nil {
 		s.logger.Error(err)
@@ -185,13 +212,13 @@ func (s *authService) RefreshToken(tokenString string) (*models.Tokens, error) {
 }
 
 // GenerateTokens - method that responsible for generating tokens. It generates jwt access token and refresh token and returns them as models.Tokenss. In case of error returns error
-func (s *authService) generateTokens(userID int64) (*models.Tokens, error) {
-	accessToken, err := createAccessToken(userID, s.cfg.Token.Access.ExpiresAt, s.cfg.Token.Access.TokenSecret)
+func (s *authService) generateTokens(publicID string, role string) (*models.Tokens, error) {
+	accessToken, err := createAccessToken(publicID, s.cfg.Token.Access.TTL, s.cfg.Token.Access.TokenSecret, role)
 	if err != nil {
 		s.logger.Error(err)
 		return nil, err
 	}
-	refreshToken, err := createRefreshToken(userID, s.cfg.Token.Refresh.ExpiresAt, s.cfg.Token.Refresh.TokenSecret)
+	refreshToken, err := createRefreshToken(publicID, s.cfg.Token.Refresh.TTL, s.cfg.Token.Refresh.TokenSecret, role)
 	if err != nil {
 		s.logger.Error(err)
 		return nil, err

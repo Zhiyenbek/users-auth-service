@@ -35,7 +35,7 @@ is now directly mapped to...
 	
 	if token, err := jwt.ParseWithClaims(tokenString, &MyCustomClaims{}, keyLookupFunc); err == nil {
 		claims := token.Claims.(*MyCustomClaims)
-		fmt.Printf("Token for user %v expires %v", claims.User, claims.StandardClaims.ExpiresAt)
+		fmt.Printf("Token for user %v expires %v", claims.User, claims.StandardClaims.TTL)
 	}
 ```
 
