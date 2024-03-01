@@ -30,6 +30,7 @@ type CandidateSignUpRequest struct {
 	Resume          string   `json:"resume"`
 	CurrentPosition string   `json:"current_position"`
 	Bio             string   `json:"bio"`
+	Education       string   `json:"education"`
 	Skills          []string `json:"skills"`
 }
 

@@ -17,10 +17,9 @@ func (h *handler) CandidateSignUp(c *gin.Context) {
 		return
 	}
 
-	switch {
-	case !validatePassword(req.Password):
+	if !validatePassword(req.Password) {
 		h.logger.Error("failed to validate password")
-		c.JSON(400, sendResponse(-1, nil, models.ErrInvalidPasswordFormat))
+		c.JSON(400, sendResponse(-1, nil, models.ErrWrongCredential))
 		return
 	}
 	err := h.service.CreateCandidate(req)

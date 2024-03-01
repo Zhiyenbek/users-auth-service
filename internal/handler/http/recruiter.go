@@ -52,10 +52,9 @@ func (h *handler) RecruiterSignIn(c *gin.Context) {
 		return
 	}
 
-	switch {
-	case !validatePassword(req.Password):
-		h.logger.Error("invalid password")
-		c.JSON(400, sendResponse(-1, nil, models.ErrInvalidPasswordFormat))
+	if !validatePassword(req.Password) {
+		h.logger.Error("failed to validate password")
+		c.JSON(400, sendResponse(-1, nil, models.ErrWrongCredential))
 		return
 	}
 	var errMsg error
