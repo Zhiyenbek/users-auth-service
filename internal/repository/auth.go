@@ -21,8 +21,9 @@ type authRepository struct {
 
 func NewAuthRepository(db *pgxpool.Pool, cfg *config.DBConf, logger *zap.SugaredLogger) AuthRepository {
 	return &authRepository{
-		db:  db,
-		cfg: cfg,
+		db:     db,
+		cfg:    cfg,
+		logger: logger,
 	}
 }
 
@@ -51,8 +52,8 @@ func (r *authRepository) Exists(login string) (bool, error) {
 	defer cancel()
 
 	var exists bool
-	query := `SELECT EXISTS(SELECT 1 FROM recruiters WHERE public_id = $1)`
-
+	query := `SELECT EXISTS(SELECT 1 FROM auth WHERE login = $1)`
+	fmt.Println(r.logger)
 	err := r.db.QueryRow(ctx, query, login).Scan(&exists)
 	if err != nil {
 		r.logger.Errorf("Error occurred while checking user existence: %v", err)

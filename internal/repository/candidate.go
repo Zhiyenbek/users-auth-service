@@ -55,7 +55,7 @@ func (r *candidateRepository) CreateCandidate(candidate *models.CandidateSignUpR
 		return err
 	}
 
-	query = `INSERT INTO candidates (public_id, current_position, resume, bio, education) VALUES ($1, $2, $3, $4) RETURNING id;`
+	query = `INSERT INTO candidates (public_id, current_position, resume, bio, education) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
 	err = tx.QueryRow(ctx, query, user_public_id, candidate.CurrentPosition, candidate.Resume, candidate.Bio, candidate.Education).Scan(&candidate_id)
 	if err != nil {
 		r.logger.Errorf("Error occurred while creating candidate: %v", err)

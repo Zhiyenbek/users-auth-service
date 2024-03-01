@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS candidates (
     id SERIAL PRIMARY KEY, 
     public_id UUID UNIQUE NOT NULL, 
     current_position TEXT, 
+    education TEXT,
     resume TEXT, 
     bio TEXT 
 ); 

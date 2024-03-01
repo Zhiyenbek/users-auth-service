@@ -38,7 +38,7 @@ func (h *handler) CandidateSignUp(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, nil)
+	c.JSON(http.StatusCreated, sendResponse(0, nil, nil))
 }
 
 func (h *handler) CandidateSignIn(c *gin.Context) {

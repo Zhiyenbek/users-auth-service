@@ -34,6 +34,13 @@ func NewAuthService(repo *repository.Repository, cfg *config.Configs, logger *za
 
 func (s *authService) CreateCandidate(req *models.CandidateSignUpRequest) error {
 	var err error
+	exists, err := s.authRepo.Exists(req.Login)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return models.ErrUsernameExists
+	}
 	req.Password, err = hashAndSalt([]byte(req.Password))
 	if err != nil {
 		s.logger.Error("could not hash password")
@@ -43,6 +50,12 @@ func (s *authService) CreateCandidate(req *models.CandidateSignUpRequest) error 
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (s *authService) CreateRecruiter(req *models.RecruiterSignUpRequest) error {
+	var err error
 	exists, err := s.authRepo.Exists(req.Login)
 	if err != nil {
 		return err
@@ -50,11 +63,6 @@ func (s *authService) CreateCandidate(req *models.CandidateSignUpRequest) error 
 	if exists {
 		return models.ErrUsernameExists
 	}
-	return nil
-}
-
-func (s *authService) CreateRecruiter(req *models.RecruiterSignUpRequest) error {
-	var err error
 	req.Password, err = hashAndSalt([]byte(req.Password))
 	if err != nil {
 		s.logger.Error("could not hash password")
@@ -64,13 +72,7 @@ func (s *authService) CreateRecruiter(req *models.RecruiterSignUpRequest) error 
 	if err != nil {
 		return err
 	}
-	exists, err := s.authRepo.Exists(req.Login)
-	if err != nil {
-		return err
-	}
-	if exists {
-		return models.ErrUsernameExists
-	}
+
 	return nil
 }
 
