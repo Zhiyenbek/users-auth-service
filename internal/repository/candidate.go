@@ -91,7 +91,7 @@ func (r *candidateRepository) CreateCandidate(candidate *models.CandidateSignUpR
 			}
 
 			// Associate the skill with the candidate
-			query = `INSERT INTO candidate_skills (candidate_id, skills_id) VALUES ($1, $2);`
+			query = `INSERT INTO candidate_skills (candidate_id, skill_id) VALUES ($1, $2);`
 			_, err = tx.Exec(ctx, query, candidate_id, skillID)
 			if err != nil {
 				r.logger.Errorf("Error occurred while associating skill with candidate: %v", err)

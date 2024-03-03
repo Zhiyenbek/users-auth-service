@@ -71,14 +71,14 @@ CREATE TABLE IF NOT EXISTS auth (
  
 CREATE TABLE IF NOT EXISTS positions_skills ( 
     position_id INT, 
-    skills_id INT, 
-    PRIMARY KEY (position_id, skills_id) 
+    skill_id INT, 
+    PRIMARY KEY (position_id, skill_id) 
 ); 
  
 CREATE TABLE IF NOT EXISTS candidate_skills ( 
     candidate_id INT, 
-    skills_id INT, 
-    PRIMARY KEY (candidate_id, skills_id) 
+    skill_id INT, 
+    PRIMARY KEY (candidate_id, skill_id) 
 ); 
  
 CREATE TABLE IF NOT EXISTS user_interviews ( 
@@ -95,9 +95,9 @@ ALTER TABLE user_interviews ADD CONSTRAINT fk_user_interviews_candidates FOREIGN
 ALTER TABLE user_interviews ADD CONSTRAINT fk_user_interviews_positions FOREIGN KEY (position_id) REFERENCES recruiters(id); 
 ALTER TABLE user_interviews ADD CONSTRAINT fk_user_interviews_interviews FOREIGN KEY (interview_id) REFERENCES interviews(id); 
 ALTER TABLE auth ADD CONSTRAINT fk_auth_users FOREIGN KEY (user_id) REFERENCES users(id); 
-ALTER TABLE positions_skills ADD CONSTRAINT fk_positions_skills_skills FOREIGN KEY (skills_id) REFERENCES skills(id); 
+ALTER TABLE positions_skills ADD CONSTRAINT fk_positions_skills_skills FOREIGN KEY (skill_id) REFERENCES skills(id); 
 ALTER TABLE positions_skills ADD CONSTRAINT fk_positions_skills_positions FOREIGN KEY (position_id) REFERENCES positions(id); 
-ALTER TABLE candidate_skills ADD CONSTRAINT fk_candidate_skills_skills FOREIGN KEY (skills_id) REFERENCES skills(id); 
+ALTER TABLE candidate_skills ADD CONSTRAINT fk_candidate_skills_skills FOREIGN KEY (skill_id) REFERENCES skills(id); 
 ALTER TABLE candidate_skills ADD CONSTRAINT fk_candidate_skills_candidates FOREIGN KEY (candidate_id) REFERENCES candidates(id); 
 ALTER TABLE positions ADD CONSTRAINT fk_recruiters_positions FOREIGN KEY (recruiters_public_id) REFERENCES recruiters(public_id); 
 ALTER TABLE videos ADD CONSTRAINT fk_interviews_videos FOREIGN KEY (interviews_public_id) REFERENCES interviews(public_id);

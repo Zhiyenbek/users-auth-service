@@ -13,11 +13,13 @@ func VerifyToken(tokenSecret string) gin.HandlerFunc {
 			c.AbortWithStatusJSON(401, sendResponse(-1, nil, models.ErrInvalidToken))
 			return
 		}
-		_, err = handler.ParseAuthToken(jwtToken, tokenSecret)
+		token, err := handler.ParseAuthToken(jwtToken, tokenSecret)
 		if err != nil {
 			c.AbortWithStatusJSON(401, sendResponse(-1, nil, models.ErrInvalidToken))
 			return
 		}
+		c.Set("role", token.Role)
+		c.Set("public_id", token.PublicID)
 		// Pass on to the next-in-chain
 		c.Next()
 	}
