@@ -73,5 +73,5 @@ func (h *handler) RecruiterSignIn(c *gin.Context) {
 	}
 	c.SetCookie("access_token", tokens.AccessToken.TokenValue, int(tokens.AccessToken.TTL.Seconds()), "/", h.cfg.Token.Access.Domain, true, true)
 	c.SetCookie("refresh_token", tokens.RefreshToken.TokenValue, int(tokens.RefreshToken.TTL.Seconds()), "/refresh-token", h.cfg.Token.Refresh.Domain, true, true)
-	c.JSON(200, sendResponse(0, nil, nil))
+	c.JSON(http.StatusOK, sendResponse(0, nil, nil))
 }
