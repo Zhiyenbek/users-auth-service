@@ -36,7 +36,7 @@ func (h *handler) InitRoutes() *gin.Engine {
 	router.POST("/refresh-token", h.RefreshToken)
 
 	router.POST("/verify", h.VerifyToken, h.TestAuth)
-
+	router.POST("/candidate/sign-out", h.SignOut)
 	return router
 }
 
