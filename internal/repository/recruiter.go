@@ -53,32 +53,35 @@ func (r *recruiterRepository) CreateRecruiter(recruiter *models.RecruiterSignUpR
 		}
 		return err
 	}
-	query = `SELECT public_id FROM companies WHERE name = $1;`
-	err = tx.QueryRow(ctx, query, recruiter.CompanyPublicID).Scan(&recruiter.CompanyPublicID)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			query := `INSERT INTO companies (name)
-			VALUES
-				($1)
-			RETURNING public_id;`
 
-			err = tx.QueryRow(ctx, query, recruiter.CompanyName).Scan(&recruiter.CompanyPublicID)
-			if err != nil {
-				r.logger.Errorf("Error occurred while creating recruiters in companies: %v", err)
+	if uuid.Validate(recruiter.CompanyPublicID) != nil {
+		query = `SELECT public_id FROM companies WHERE name = $1;`
+		err = tx.QueryRow(ctx, query, recruiter.CompanyPublicID).Scan(&recruiter.CompanyPublicID)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				query := `INSERT INTO companies (name)
+				VALUES
+					($1)
+				RETURNING public_id;`
 
+				err = tx.QueryRow(ctx, query, recruiter.CompanyName).Scan(&recruiter.CompanyPublicID)
+				if err != nil {
+					r.logger.Errorf("Error occurred while creating recruiters in companies: %v", err)
+
+					errTX := tx.Rollback(ctx)
+					if errTX != nil {
+						r.logger.Errorf("ERROR: transaction: %s", errTX)
+					}
+					return err
+				}
+			} else {
+				r.logger.Errorf("Error occurred while checking company existence: %v", err)
 				errTX := tx.Rollback(ctx)
 				if errTX != nil {
 					r.logger.Errorf("ERROR: transaction: %s", errTX)
 				}
 				return err
 			}
-		} else {
-			r.logger.Errorf("Error occurred while checking company existence: %v", err)
-			errTX := tx.Rollback(ctx)
-			if errTX != nil {
-				r.logger.Errorf("ERROR: transaction: %s", errTX)
-			}
-			return err
 		}
 	}
 

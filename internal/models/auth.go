@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/google/uuid"
 )
 
 type UserSignInRequest struct {
@@ -21,8 +20,8 @@ type UserData struct {
 
 type RecruiterSignUpRequest struct {
 	UserData
-	CompanyName     string    `json:"company_name"`
-	CompanyPublicID uuid.UUID `json:"company_public_id"`
+	CompanyName     string `json:"company_name"`
+	CompanyPublicID string `json:"company_public_id"`
 }
 
 type CandidateSignUpRequest struct {
