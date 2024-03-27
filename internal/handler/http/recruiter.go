@@ -17,7 +17,11 @@ func (h *handler) RecruiterSignUp(c *gin.Context) {
 		c.AbortWithStatusJSON(400, sendResponse(-1, nil, models.ErrInvalidInput))
 		return
 	}
-
+	if req.CompanyName == "" && req.CompanyPublicID == "" {
+		h.logger.Errorf("ERROR: invalid input, some fields are incorrect: company name and company public id is missing")
+		c.AbortWithStatusJSON(400, sendResponse(-1, nil, models.ErrInvalidInput))
+		return
+	}
 	switch {
 	case !validatePassword(req.Password):
 		h.logger.Error("invalid password")
